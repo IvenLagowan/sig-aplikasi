@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SIG Papua | Sistem Informasi Geografis Pemetaan Wilayah Papua</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        papua: {
+                            50: '#ecfeff',
+                            100: '#cffafe',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                            800: '#155e75',
+                            900: '#164e63'
+                        }
+                    },
+                    boxShadow: {
+                        glow: '0 0 30px rgba(6,182,212,.25)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+    />
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: Inter, system-ui, sans-serif;
+        }
+
+        #map {
+            height: 600px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 14px;
+        }
+
+        .glass {
+            background: rgba(255,255,255,.75);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        .dark .glass {
+            background: rgba(15,23,42,.75);
+        }
+
+        .hero-pattern {
+            background-image:
+                linear-gradient(rgba(6,182,212,.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6,182,212,.06) 1px, transparent 1px);
+            background-size: 45px 45px;
+        }
+
+        .gradient-text {
+            background: linear-gradient(
+                90deg,
+                #06b6d4,
+                #2563eb,
+                #7c3aed
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .marker-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .marker-card {
+            transition: .3s ease;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #0891b2;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
+
+<!-- ================= NAVBAR ================= -->
+<header class="fixed top-0 left-0 right-0 z-50">
+
+    <nav class="glass border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div class="flex items-center justify-between h-20">
+
+                <!-- Logo -->
+                <a href="#home" class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-glow">
+                        <i class="fa-solid fa-map-location-dot text-xl"></i>
+                    </div>
+
+                    <div>
+                        <h1 class="font-black text-lg">
+                            SIG <span class="text-cyan-500">PAPUA</span>
+                        </h1>
+
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                            Geographic Information System
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center gap-7">
+
+                    <a href="#home"
+                       class="nav-link hover:text-cyan-500 transition">
+                        Beranda
+                    </a>
+
+                    <a href="#peta"
+                       class="nav-link hover:text-cyan-500 transition">
+                        Peta
+                    </a>
+
+                    <a href="#wilayah"
+                       class="nav-link hover:text-cyan-500 transition">
+                        Wilayah
+                    </a>
+
+                    <a href="#informasi"
+                       class="nav-link hover:text-cyan-500 transition">
+                        Informasi
+                    </a>
+
+                    <a href="#kontak"
+                       class="nav-link hover:text-cyan-500 transition">
+                        Kontak
+                    </a>
+
+                    <!-- Dark Mode -->
+                    <button
+                        onclick="toggleDarkMode()"
+                        class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-cyan-100 dark:hover:bg-slate-700 transition">
+
+                        <i id="themeIcon"
+                           class="fa-solid fa-moon text-cyan-600"></i>
+                    </button>
+
+                </div>
+
+                <!-- Mobile Button -->
+                <button
+                    onclick="toggleMenu()"
+                    class="md:hidden w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800">
+
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+            </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobileMenu"
+                 class="hidden md:hidden pb-5">
+
+                <div class="flex flex-col gap-4 pt-4 border-t dark:border-slate-700">
+
+                    <a href="#home" onclick="toggleMenu()">Beranda</a>
+                    <a href="#peta" onclick="toggleMenu()">Peta</a>
+                    <a href="#wilayah" onclick="toggleMenu()">Wilayah</a>
+                    <a href="#informasi" onclick="toggleMenu()">Informasi</a>
+                    <a href="#kontak" onclick="toggleMenu()">Kontak</a>
+
+                </div>
+            </div>
+
+        </div>
+    </nav>
+</header>
+
+
+<!-- ================= HERO ================= -->
+<section id="home"
+    class="relative min-h-screen flex items-center overflow-hidden hero-pattern pt-20">
+
+    <div class="absolute -top-40 -right-40 w-96 h-96 bg-cyan-500/20 blur-3xl rounded-full"></div>
+    <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-500/20 blur-3xl rounded-full"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+
+            <!-- Text -->
+            <div>
+
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full
+                            bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300
+                            text-sm font-semibold mb-6">
+
+                    <span class="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></span>
+
+                    Sistem Informasi Geografis Papua
+                </div>
+
+                <h2 class="text-4xl md:text-6xl font-black leading-tight">
+
+                    Pemetaan Wilayah
+
+                    <span class="gradient-text">
+                        Papua
+                    </span>
+
+                    Berbasis Web
+                </h2>
+
+                <p class="mt-6 text-lg text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed">
+
+                    Platform SIG untuk membantu menampilkan, mencari,
+                    dan mengeksplorasi informasi geografis wilayah Papua
+                    secara interaktif dan mudah digunakan.
+
+                </p>
+
+                <div class="flex flex-wrap gap-4 mt-8">
+
+                    <a href="#peta"
+                       class="px-6 py-3 rounded-xl bg-gradient-to-r
+                              from-cyan-500 to-blue-600
+                              text-white font-bold shadow-lg
+                              hover:scale-105 transition">
+
+                        <i class="fa-solid fa-map mr-2"></i>
+                        Jelajahi Peta
+                    </a>
+
+                    <a href="#wilayah"
+                       class="px-6 py-3 rounded-xl border border-slate-300
+                              dark:border-slate-700 font-bold
+                              hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+
+                        Lihat Wilayah
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- Hero Map Card -->
+            <div class="relative">
+
+                <div class="absolute -inset-4 bg-gradient-to-r
+                            from-cyan-500 to-blue-600
+                            rounded-3xl blur-2xl opacity-20">
+                </div>
+
+                <div class="relative bg-white dark:bg-slate-900
+                            rounded-3xl p-4 shadow-2xl border
+                            border-slate-200 dark:border-slate-800">
+
+                    <div class="bg-slate-900 rounded-2xl h-96
+                                flex items-center justify-center overflow-hidden">
+
+                        <div class="text-center text-white">
+
+                            <i class="fa-solid fa-map-location-dot
+                                      text-7xl text-cyan-400 mb-6">
+                            </i>
+
+                            <h3 class="text-2xl font-bold">
+                                Interactive Papua Map
+                            </h3>
+
+                            <p class="text-slate-400 mt-2">
+                                Explore wilayah Papua
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- ================= STATISTICS ================= -->
+<section class="py-16 bg-white dark:bg-slate-900">
+
+    <div class="max-w-7xl mx-auto px-4">
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+
+            <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
+                <i class="fa-solid fa-map text-3xl text-cyan-500"></i>
+
+                <h3 class="text-3xl font-black mt-4">
+                    6
+                </h3>
+
+                <p class="text-slate-500">
+                    Provinsi
+                </p>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
+                <i class="fa-solid fa-location-dot text-3xl text-blue-500"></i>
+
+                <h3 class="text-3xl font-black mt-4">
+                    42+
+                </h3>
+
+                <p class="text-slate-500">
+                    Kabupaten/Kota
+                </p>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
+                <i class="fa-solid fa-database text-3xl text-purple-500"></i>
+
+                <h3 class="text-3xl font-black mt-4">
+                    100+
+                </h3>
+
+                <p class="text-slate-500">
+                    Data Wilayah
+                </p>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700">
+                <i class="fa-solid fa-satellite text-3xl text-green-500"></i>
+
+                <h3 class="text-3xl font-black mt-4">
+                    GIS
+                </h3>
+
+                <p class="text-slate-500">
+                    Berbasis Web
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= MAP ================= -->
+<section id="peta" class="py-20">
+
+    <div class="max-w-7xl mx-auto px-4">
+
+        <div class="text-center mb-10">
+
+            <span class="text-cyan-500 font-bold uppercase tracking-widest">
+                Geographic Map
+            </span>
+
+            <h2 class="text-4xl font-black mt-2">
+                Peta Interaktif Papua
+            </h2>
+
+            <p class="text-slate-500 mt-3">
+                Gunakan peta untuk mengeksplorasi lokasi wilayah.
+            </p>
+
+        </div>
+
+
+        <!-- Search + Filter -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl
+                    shadow-xl border dark:border-slate-800
+                    p-4 mb-6">
+
+            <div class="grid md:grid-cols-3 gap-4">
+
+                <!-- Search -->
+                <div class="md:col-span-2 relative">
+
+                    <i class="fa-solid fa-search absolute left-4 top-4 text-slate-400"></i>
+
+                    <input
+                        id="searchInput"
+                        type="text"
+                        placeholder="Cari wilayah, kota, atau kabupaten..."
+                        class="w-full pl-11 pr-4 py-3 rounded-xl
+                               bg-slate-100 dark:bg-slate-800
+                               outline-none focus:ring-2 focus:ring-cyan-500">
+
+                </div>
+
+
+                <!-- Filter -->
+                <select
+                    id="categoryFilter"
+                    onchange="filterLocations()"
+                    class="px-4 py-3 rounded-xl bg-slate-100
+                           dark:bg-slate-800 outline-none
+                           focus:ring-2 focus:ring-cyan-500">
+
+                    <option value="all">
+                        Semua Wilayah
+                    </option>
+
+                    <option value="kota">
+                        Kota
+                    </option>
+
+                    <option value="kabupaten">
+                        Kabupaten
+                    </option>
+
+                    <option value="provinsi">
+                        Provinsi
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- Map -->
+        <div class="rounded-3xl overflow-hidden shadow-2xl
+                    border-4 border-white dark:border-slate-800">
+
+            <div id="map"></div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= WILAYAH ================= -->
+<section id="wilayah"
+         class="py-20 bg-slate-100 dark:bg-slate-900/70">
+
+    <div class="max-w-7xl mx-auto px-4">
+
+        <div class="flex flex-col md:flex-row
+                    md:items-end md:justify-between mb-10">
+
+            <div>
+
+                <span class="text-cyan-500 font-bold uppercase tracking-widest">
+                    Data Wilayah
+                </span>
+
+                <h2 class="text-4xl font-black mt-2">
+                    Wilayah Papua
+                </h2>
+
+            </div>
+
+            <p class="text-slate-500 mt-4 md:mt-0">
+                Pilih wilayah untuk melihat lokasi pada peta.
+            </p>
+
+        </div>
+
+
+        <!-- Cards -->
+        <div id="locationCards"
+             class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= INFORMASI ================= -->
+<section id="informasi" class="py-20">
+
+    <div class="max-w-7xl mx-auto px-4">
+
+        <div class="text-center mb-12">
+
+            <span class="text-cyan-500 font-bold uppercase tracking-widest">
+                Informasi
+            </span>
+
+            <h2 class="text-4xl font-black mt-2">
+                Tentang SIG Papua
+            </h2>
+
+        </div>
+
+
+        <div class="grid md:grid-cols-3 gap-6">
+
+            <!-- Card -->
+            <div class="p-7 rounded-2xl bg-white dark:bg-slate-900
+                        border dark:border-slate-800 shadow-lg">
+
+                <div class="w-14 h-14 rounded-xl
+                            bg-cyan-100 dark:bg-cyan-950
+                            flex items-center justify-center
+                            text-cyan-600 text-2xl">
+
+                    <i class="fa-solid fa-map-location-dot"></i>
+
+                </div>
+
+                <h3 class="text-xl font-bold mt-5">
+                    Pemetaan Digital
+                </h3>
+
+                <p class="text-slate-500 mt-3 leading-relaxed">
+                    Menampilkan informasi geografis secara digital
+                    sehingga pengguna dapat mengeksplorasi wilayah
+                    dengan lebih mudah.
+                </p>
+
+            </div>
+
+
+            <!-- Card -->
+            <div class="p-7 rounded-2xl bg-white dark:bg-slate-900
+                        border dark:border-slate-800 shadow-lg">
+
+                <div class="w-14 h-14 rounded-xl
+                            bg-blue-100 dark:bg-blue-950
+                            flex items-center justify-center
+                            text-blue-600 text-2xl">
+
+                    <i class="fa-solid fa-database"></i>
+
+                </div>
+
+                <h3 class="text-xl font-bold mt-5">
+                    Data Wilayah
+                </h3>
+
+                <p class="text-slate-500 mt-3 leading-relaxed">
+                    Menyediakan struktur data wilayah yang dapat
+                    dikembangkan untuk kebutuhan penelitian dan
+                    sistem informasi geografis.
+                </p>
+
+            </div>
+
+
+            <!-- Card -->
+            <div class="p-7 rounded-2xl bg-white dark:bg-slate-900
+                        border dark:border-slate-800 shadow-lg">
+
+                <div class="w-14 h-14 rounded-xl
+                            bg-purple-100 dark:bg-purple-950
+                            flex items-center justify-center
+                            text-purple-600 text-2xl">
+
+                    <i class="fa-solid fa-chart-area"></i>
+
+                </div>
+
+                <h3 class="text-xl font-bold mt-5">
+                    Analisis Spasial
+                </h3>
+
+                <p class="text-slate-500 mt-3 leading-relaxed">
+                    Data geografis dapat dikembangkan untuk analisis
+                    wilayah, pembangunan, fasilitas, pariwisata,
+                    pendidikan, dan berbagai kebutuhan lainnya.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= CONTACT ================= -->
+<section id="kontak"
+         class="py-20 bg-gradient-to-br
+                from-cyan-600 to-blue-700 text-white">
+
+    <div class="max-w-6xl mx-auto px-4">
+
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+
+            <div>
+
+                <span class="uppercase tracking-widest
+                             text-cyan-100 font-bold">
+                    Hubungi Kami
+                </span>
+
+                <h2 class="text-4xl md:text-5xl
+                           font-black mt-3">
+
+                    Butuh Informasi
+                    <br>
+                    Tentang Wilayah Papua?
+
+                </h2>
+
+                <p class="mt-5 text-cyan-50 leading-relaxed">
+
+                    Sistem ini dapat dikembangkan menjadi platform
+                    SIG yang lebih lengkap dengan database,
+                    dashboard administrator, GIS analysis,
+                    dan API geografis.
+
+                </p>
+
+            </div>
+
+
+            <!-- Contact Card -->
+            <div class="bg-white/10 backdrop-blur-xl
+                        border border-white/20 rounded-3xl
+                        p-7">
+
+                <div class="space-y-5">
+
+                    <div class="flex gap-4 items-center">
+
+                        <div class="w-12 h-12 rounded-xl
+                                    bg-white/20 flex items-center
+                                    justify-center">
+
+                            <i class="fa-solid fa-envelope"></i>
+
+                        </div>
+
+                        <div>
+
+                            <p class="text-sm text-cyan-100">
+                                Email
+                            </p>
+
+                            <p class="font-bold">
+                                info@sigpapua.com
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="flex gap-4 items-center">
+
+                        <div class="w-12 h-12 rounded-xl
+                                    bg-white/20 flex items-center
+                                    justify-center">
+
+                            <i class="fa-solid fa-location-dot"></i>
+
+                        </div>
+
+                        <div>
+
+                            <p class="text-sm text-cyan-100">
+                                Wilayah
+                            </p>
+
+                            <p class="font-bold">
+                                Papua, Indonesia
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="flex gap-4 items-center">
+
+                        <div class="w-12 h-12 rounded-xl
+                                    bg-white/20 flex items-center
+                                    justify-center">
+
+                            <i class="fa-solid fa-globe"></i>
+
+                        </div>
+
+                        <div>
+
+                            <p class="text-sm text-cyan-100">
+                                Platform
+                            </p>
+
+                            <p class="font-bold">
+                                Web GIS
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FOOTER ================= -->
+<footer class="bg-slate-950 text-slate-400">
+
+    <div class="max-w-7xl mx-auto px-4 py-14">
+
+        <div class="grid md:grid-cols-4 gap-10">
+
+            <!-- Brand -->
+            <div class="md:col-span-2">
+
+                <div class="flex items-center gap-3">
+
+                    <div class="w-11 h-11 rounded-xl
+                                bg-gradient-to-br from-cyan-500
+                                to-blue-600 flex items-center
+                                justify-center text-white">
+
+                        <i class="fa-solid fa-map-location-dot"></i>
+
+                    </div>
+
+                    <h3 class="text-xl font-black text-white">
+                        SIG PAPUA
+                    </h3>
+
+                </div>
+
+                <p class="mt-5 max-w-md leading-relaxed">
+
+                    Sistem Informasi Geografis untuk visualisasi
+                    dan pemetaan wilayah Papua berbasis website.
+
+                </p>
+
+                <div class="flex gap-3 mt-6">
+
+                    <a href="#"
+                       class="w-10 h-10 rounded-lg bg-slate-800
+                              flex items-center justify-center
+                              hover:bg-cyan-600 transition">
+
+                        <i class="fa-brands fa-facebook-f"></i>
+
+                    </a>
+
+                    <a href="#"
+                       class="w-10 h-10 rounded-lg bg-slate-800
+                              flex items-center justify-center
+                              hover:bg-cyan-600 transition">
+
+                        <i class="fa-brands fa-instagram"></i>
+
+                    </a>
+
+                    <a href="#"
+                       class="w-10 h-10 rounded-lg bg-slate-800
+                              flex items-center justify-center
+                              hover:bg-cyan-600 transition">
+
+                        <i class="fa-brands fa-github"></i>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- Navigation -->
+            <div>
+
+                <h4 class="text-white font-bold mb-5">
+                    Navigasi
+                </h4>
+
+                <div class="space-y-3">
+
+                    <a href="#home" class="block hover:text-cyan-400">
+                        Beranda
+                    </a>
+
+                    <a href="#peta" class="block hover:text-cyan-400">
+                        Peta
+                    </a>
+
+                    <a href="#wilayah" class="block hover:text-cyan-400">
+                        Wilayah
+                    </a>
+
+                    <a href="#informasi" class="block hover:text-cyan-400">
+                        Informasi
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- Teknologi -->
+            <div>
+
+                <h4 class="text-white font-bold mb-5">
+                    Teknologi
+                </h4>
+
+                <div class="space-y-3">
+
+                    <p>
+                        <i class="fa-brands fa-html5 text-orange-500 mr-2"></i>
+                        HTML5
+                    </p>
+
+                    <p>
+                        <i class="fa-brands fa-css3-alt text-blue-500 mr-2"></i>
+                        Tailwind CSS
+                    </p>
+
+                    <p>
+                        <i class="fa-brands fa-js text-yellow-400 mr-2"></i>
+                        JavaScript
+                    </p>
+
+                    <p>
+                        <i class="fa-solid fa-map text-green-500 mr-2"></i>
+                        Leaflet GIS
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="border-t border-slate-800 mt-10 pt-7
+                    flex flex-col md:flex-row
+                    justify-between gap-3 text-sm">
+
+            <p>
+                © 2026 SIG Papua. All Rights Reserved.
+            </p>
+
+            <p>
+                Sistem Informasi Geografis Pemetaan Wilayah Papua
+            </p>
+
+        </div>
+
+    </div>
+
+</footer>
+
+
+<!-- ================= LEAFLET ================= -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
+<script>
+
+    /* ===============================
+       DARK MODE
+    =============================== */
+
+    function toggleDarkMode() {
+
+        document.documentElement.classList.toggle('dark');
+
+        const icon = document.getElementById('themeIcon');
+
+        if (document.documentElement.classList.contains('dark')) {
+
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+
+        } else {
+
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+
+        }
+    }
+
+
+    /* ===============================
+       MOBILE MENU
+    =============================== */
+
+    function toggleMenu() {
+
+        document
+            .getElementById('mobileMenu')
+            .classList.toggle('hidden');
+
+    }
+
+
+    /* ===============================
+       DATA WILAYAH
+    =============================== */
+
+    const locations = [
+
+        {
+            name: "Jayapura",
+            category: "kota",
+            province: "Papua",
+            lat: -2.5337,
+            lng: 140.7181,
+            description: "Kota Jayapura merupakan pusat pemerintahan Provinsi Papua."
+        },
+
+        {
+            name: "Wamena",
+            category: "kota",
+            province: "Papua Pegunungan",
+            lat: -4.0956,
+            lng: 138.9522,
+            description: "Wamena merupakan salah satu pusat aktivitas masyarakat di Papua Pegunungan."
+        },
+
+        {
+            name: "Timika",
+            category: "kota",
+            province: "Papua Tengah",
+            lat: -4.5447,
+            lng: 136.8877,
+            description: "Timika merupakan salah satu pusat perkotaan di Papua Tengah."
+        },
+
+        {
+            name: "Merauke",
+            category: "kabupaten",
+            province: "Papua Selatan",
+            lat: -8.4932,
+            lng: 140.4018,
+            description: "Merauke berada di wilayah selatan Pulau Papua."
+        },
+
+        {
+            name: "Nabire",
+            category: "kabupaten",
+            province: "Papua Tengah",
+            lat: -3.3682,
+            lng: 135.4967,
+            description: "Nabire merupakan salah satu wilayah di Papua Tengah."
+        },
+
+        {
+            name: "Biak",
+            category: "kabupaten",
+            province: "Papua",
+            lat: -1.0381,
+            lng: 136.0517,
+            description: "Biak merupakan wilayah kepulauan di bagian utara Papua."
+        },
+
+        {
+            name: "Sorong",
+            category: "kota",
+            province: "Papua Barat Daya",
+            lat: -0.8762,
+            lng: 131.2558,
+            description: "Sorong merupakan salah satu kota utama di Papua Barat Daya."
+        },
+
+        {
+            name: "Manokwari",
+            category: "kabupaten",
+            province: "Papua Barat",
+            lat: -0.8615,
+            lng: 134.0620,
+            description: "Manokwari merupakan pusat pemerintahan Papua Barat."
+        }
+
+    ];
+
+
+    /* ===============================
+       INITIALIZE MAP
+    =============================== */
+
+    const map = L.map('map').setView(
+        [-4.2699, 137.1123],
+        5
+    );
+
+
+    /* OpenStreetMap */
+    L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap contributors'
+        }
+    ).addTo(map);
+
+
+    /* ===============================
+       MARKER LAYER
+    =============================== */
+
+    let markerLayer = L.layerGroup().addTo(map);
+
+
+    /* ===============================
+       CREATE MARKERS
+    =============================== */
+
+    function displayMarkers(data) {
+
+        markerLayer.clearLayers();
+
+        data.forEach(location => {
+
+            const marker = L.marker([
+                location.lat,
+                location.lng
+            ]);
+
+
+            marker.bindPopup(`
+
+                <div style="min-width:220px">
+
+                    <h3 style="
+                        font-size:18px;
+                        font-weight:bold;
+                        margin-bottom:6px;
+                        color:#0891b2;
+                    ">
+                        ${location.name}
+                    </h3>
+
+                    <p style="
+                        margin-bottom:5px;
+                        font-weight:600;
+                    ">
+                        ${location.province}
+                    </p>
+
+                    <p style="
+                        font-size:13px;
+                        color:#64748b;
+                    ">
+                        ${location.description}
+                    </p>
+
+                    <button
+                        onclick="focusLocation(${location.lat}, ${location.lng})"
+                        style="
+                            margin-top:10px;
+                            width:100%;
+                            padding:8px;
+                            border-radius:8px;
+                            border:0;
+                            background:#0891b2;
+                            color:white;
+                            cursor:pointer;
+                        "
+                    >
+                        Lihat Lokasi
+                    </button>
+
+                </div>
+
+            `);
+
+            markerLayer.addLayer(marker);
+
+        });
+
+    }
+
+
+    displayMarkers(locations);
+
+
+    /* ===============================
+       FOCUS LOCATION
+    =============================== */
+
+    function focusLocation(lat, lng) {
+
+        map.setView(
+            [lat, lng],
+            12,
+            {
+                animate: true
+            }
+        );
+
+    }
+
+
+    /* ===============================
+       LOCATION CARDS
+    =============================== */
+
+    function displayCards(data) {
+
+        const container =
+            document.getElementById('locationCards');
+
+        container.innerHTML = '';
+
+        if (data.length === 0) {
+
+            container.innerHTML = `
+
+                <div class="col-span-full text-center py-12">
+
+                    <i class="fa-solid fa-map-location-dot
+                              text-5xl text-slate-400">
+                    </i>
+
+                    <p class="mt-4 text-slate-500">
+                        Data wilayah tidak ditemukan.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+        }
+
+
+        data.forEach(location => {
+
+            container.innerHTML += `
+
+                <div class="marker-card bg-white dark:bg-slate-900
+                            rounded-2xl p-6 border
+                            dark:border-slate-800 shadow-lg">
+
+                    <div class="flex items-start justify-between">
+
+                        <div class="w-12 h-12 rounded-xl
+                                    bg-cyan-100 dark:bg-cyan-950
+                                    flex items-center justify-center
+                                    text-cyan-600">
+
+                            <i class="fa-solid fa-location-dot"></i>
+
+                        </div>
+
+                        <span class="px-3 py-1 rounded-full
+                                     text-xs font-bold
+                                     bg-cyan-100 text-cyan-700
+                                     dark:bg-cyan-950
+                                     dark:text-cyan-300">
+
+                            ${location.category}
+
+                        </span>
+
+                    </div>
+
+
+                    <h3 class="text-xl font-bold mt-5">
+                        ${location.name}
+                    </h3>
+
+
+                    <p class="text-cyan-600 text-sm font-semibold mt-1">
+                        ${location.province}
+                    </p>
+
+
+                    <p class="text-slate-500 text-sm mt-3 leading-relaxed">
+                        ${location.description}
+                    </p>
+
+
+                    <button
+                        onclick="focusLocation(${location.lat}, ${location.lng})"
+                        class="w-full mt-5 py-3 rounded-xl
+                               bg-slate-100 dark:bg-slate-800
+                               hover:bg-cyan-500 hover:text-white
+                               transition font-semibold">
+
+                        <i class="fa-solid fa-map-pin mr-2"></i>
+                        Lihat di Peta
+
+                    </button>
+
+                </div>
+
+            `;
+
+        });
+
+    }
+
+
+    displayCards(locations);
+
+
+    /* ===============================
+       FILTER
+    =============================== */
+
+    function filterLocations() {
+
+        const category =
+            document.getElementById('categoryFilter').value;
+
+        const search =
+            document.getElementById('searchInput')
+                    .value
+                    .toLowerCase();
+
+
+        const filtered = locations.filter(location => {
+
+            const matchCategory =
+                category === 'all' ||
+                location.category === category;
+
+            const matchSearch =
+                location.name
+                    .toLowerCase()
+                    .includes(search) ||
+
+                location.province
+                    .toLowerCase()
+                    .includes(search);
+
+            return matchCategory && matchSearch;
+
+        });
+
+
+        displayMarkers(filtered);
+        displayCards(filtered);
+
+    }
+
+
+    /* ===============================
+       SEARCH
+    =============================== */
+
+    document
+        .getElementById('searchInput')
+        .addEventListener(
+            'input',
+            filterLocations
+        );
+
+
+    /* ===============================
+       MAP RESIZE
+    =============================== */
+
+    setTimeout(() => {
+
+        map.invalidateSize();
+
+    }, 500);
+
+</script>
+
+</body>
+</html>
